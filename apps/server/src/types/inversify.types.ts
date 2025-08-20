@@ -5,4 +5,5 @@ export const TYPES = {
 
    // Services
    OrderService: Symbol.for('OrderService'),
+   PubSubService: Symbol.for('PubSubService'),
 };

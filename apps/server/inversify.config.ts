@@ -1,14 +1,15 @@
 import { Container } from 'inversify';
 import 'reflect-metadata';
 
-import { TYPES } from './src/types/inversify.types';
+import { TYPES } from '@/types/inversify.types';
 
 // Core
-import { MatchingEngine } from './src/core/matchingEngine';
-import { Orderbook } from './src/core/orderbook';
+import { MatchingEngine } from '@/core/matchingEngine';
+import { Orderbook } from '@/core/orderbook';
 
 // Services
-import { OrderService } from './src/services/oderService';
+import { PubSubService } from '@/services/PubSubService';
+import { OrderService } from '@/services/orderService';
 
 const inversifyContainer = new Container();
 
@@ -24,8 +25,11 @@ inversifyContainer
    .bind<MatchingEngine>(TYPES.MatchingEngine)
    .to(MatchingEngine);
 
+inversifyContainer
+   .bind<PubSubService>(TYPES.PubSubService)
+   .to(PubSubService)
+   .inSingletonScope();
 // --- Bind Services ---
 inversifyContainer.bind<OrderService>(TYPES.OrderService).to(OrderService);
 
 export { inversifyContainer };
-

@@ -1,18 +1,85 @@
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import express from 'express';
+import { useServer } from 'graphql-ws/use/ws';
+import http from 'http';
+import { WebSocketServer } from 'ws';
 
-const typeDefs = `#graphql
-  type Query {
-    ping: String
-  }
-`;
+// Inversify and services
+import { inversifyContainer } from '../inversify.config';
+import { OrderService } from './services/orderService';
+import { PubSubService } from './services/PubSubService';
+import { TYPES } from './types/inversify.types';
 
-const resolvers = {
-   Query: {
-      ping: () => 'pong',
+// Your GraphQL Schema and Resolvers
+import { resolvers } from './graphql/resolvers';
+import { typeDefs } from './graphql/schema';
+
+const PORT = 4000;
+
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const app = express();
+const httpServer = http.createServer(app);
+
+const wsServer = new WebSocketServer({
+   server: httpServer,
+   path: '/graphql',
+});
+
+// Get service instances from our DI container
+const orderService = inversifyContainer.get<OrderService>(TYPES.OrderService);
+const pubSubService = inversifyContainer.get<PubSubService>(
+   TYPES.PubSubService,
+);
+
+// This function handles the WebSocket connection with proper context
+const serverCleanup = useServer(
+   {
+      schema,
+      context: async (ctx, msg, args) => ({
+         orderService,
+         pubSubService,
+      }),
    },
-};
+   wsServer,
+);
 
-const server = new ApolloServer({ typeDefs, resolvers });
-const { url } = await startStandaloneServer(server, { listen: { port: 4000 } });
-console.log(`🚀 Server ready at ${url}`);
+const server = new ApolloServer({
+   schema,
+   plugins: [
+      // Plugin to properly shut down the HTTP server.
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      // Plugin to properly shut down the WebSocket server.
+      {
+         async serverWillStart() {
+            return {
+               async drainServer() {
+                  await serverCleanup.dispose();
+               },
+            };
+         },
+      },
+   ],
+});
+
+await server.start();
+
+// The core of the integration: Apollo Server runs as Express middleware.
+app.use(
+   '/graphql',
+   express.json(),
+   expressMiddleware(server, {
+      context: async () => ({
+         orderService,
+         pubSubService,
+      }),
+   }),
+);
+
+httpServer.listen(PORT, () => {
+   console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+   console.log(`🚀 Subscription endpoint at ws://localhost:${PORT}/graphql`);
+});

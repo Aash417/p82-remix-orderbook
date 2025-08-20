@@ -5,7 +5,7 @@ export type OrderId = string;
 export type OrderType = 'BUY' | 'SELL';
 
 // The current status of an order.
-export type OrderStatus = 'OPEN' | 'FILLED' | 'CANCELLED';
+export type OrderStatus = 'OPEN' | 'FILLED' | 'PARTIALLY_FILLED' | 'CANCELLED';
 
 // Represents a single order in the order book.
 export interface Order {
@@ -19,6 +19,7 @@ export interface Order {
 
 // Represents an executed trade between two orders.
 export interface Trade {
+   id: string;
    price: number;
    quantity: number;
    timestamp: number;

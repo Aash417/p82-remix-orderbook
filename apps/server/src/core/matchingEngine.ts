@@ -1,5 +1,6 @@
 import { TYPES } from '@/types/inversify.types';
 import { Order, Trade } from '@/types/order';
+import { randomUUID } from 'crypto';
 import { inject, injectable } from 'inversify';
 import 'reflect-metadata';
 import { Orderbook } from './orderbook';
@@ -7,7 +8,9 @@ import { Orderbook } from './orderbook';
 @injectable() // Mark this class as manageable by Inversify
 export class MatchingEngine {
    // Inversify will inject the singleton Orderbook instance here.
-   constructor(@inject(TYPES.Orderbook) private orderbook: Orderbook) {}
+   constructor(
+      @inject(TYPES.Orderbook) private readonly orderbook: Orderbook,
+   ) {}
    /**
     * Processes a new incoming order (taker order).
     * @param takerOrder The new order to be matched.
@@ -30,6 +33,7 @@ export class MatchingEngine {
 
             // Create the trade
             trades.push({
+               id: randomUUID(),
                price: bestAsk.price, // Trade executes at the maker's price
                quantity: tradeQuantity,
                timestamp: Date.now(),
@@ -58,6 +62,7 @@ export class MatchingEngine {
             const tradeQuantity = Math.min(remainingQuantity, bestBid.quantity);
 
             trades.push({
+               id: randomUUID(),
                price: bestBid.price,
                quantity: tradeQuantity,
                timestamp: Date.now(),

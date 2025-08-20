@@ -1,25 +1,30 @@
 {
-  "name": "server",
-  "main": "src/index.ts",
-  "type": "module",
-  "scripts": {
-    "build": "tsdown",
-    "check-types": "tsc -b",
-    "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
-    "dev": "tsx watch src/index.ts",
-    "start": "pm2 start dist/index.js --name todox-server"
-  },
-  "dependencies": {
-    "@apollo/server": "^5.0.0",
-    "graphql": "^16.11.0",
-    "inversify": "^7.8.1",
-    "pm2": "^6.0.8",
-    "reflect-metadata": "^0.2.2"
-  },
-  "devDependencies": {
-    "@types/node": "^22.13.11",
-    "tsdown": "^0.12.9",
-    "tsx": "^4.19.2",
-    "typescript": "^5.8.2"
-  }
+   "name": "server",
+   "main": "src/index.ts",
+   "type": "module",
+   "scripts": {
+      "build": "tsdown",
+      "check-types": "tsc -b",
+      "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
+      "dev": "tsx watch src/index.ts",
+      "start": "pm2 start dist/index.js --name todox-server"
+   },
+   "dependencies": {
+      "@apollo/server": "^4.12.2",
+      "@graphql-tools/schema": "^10.0.25",
+      "express": "^5.1.0",
+      "graphql": "^16.11.0",
+      "graphql-subscriptions": "^3.0.0",
+      "graphql-ws": "^6.0.6",
+      "inversify": "^7.8.1",
+      "pm2": "^6.0.8",
+      "reflect-metadata": "^0.2.2",
+      "ws": "^8.18.3"
+   },
+   "devDependencies": {
+      "@types/node": "^22.13.11",
+      "tsdown": "^0.12.9",
+      "tsx": "^4.19.2",
+      "typescript": "^5.8.2"
+   }
 }

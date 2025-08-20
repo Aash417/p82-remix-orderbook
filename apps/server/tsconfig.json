@@ -2,24 +2,16 @@
    "compilerOptions": {
       "baseUrl": ".",
       "paths": {
-         "@/*": [
-            "./src/*"
-         ]
+         "@/*": ["./src/*"]
       },
-      "rootDirs": [
-         "src"
-      ],
+      "rootDirs": ["src"],
       "outDir": "dist",
-      "lib": [
-         "es2023"
-      ],
+      "lib": ["es2023"],
       "target": "es2023",
       "module": "esnext",
-      "moduleResolution": "node",
+      "moduleResolution": "bundler",
       "esModuleInterop": true,
-      "types": [
-         "node"
-      ],
+      "types": ["node"],
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true
    }
