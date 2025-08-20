@@ -9,8 +9,9 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-         hello world
+      <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
+         <h1>Welcome to the Orderbook Simulator</h1>
+         <p>The application is running entirely on the client-side.</p>
       </div>
    );
 }
