@@ -8,43 +8,112 @@ interface OrderbookDisplayProps {
    asks: Order[];
 }
 
-export function OrderbookDisplay({ bids, asks }: OrderbookDisplayProps) {
+export function OrderbookDisplay({
+   bids,
+   asks,
+}: Readonly<OrderbookDisplayProps>) {
+   // Calculate max quantities for depth visualization
+   const maxBidQuantity = Math.max(...bids.map((b) => b.quantity), 0);
+   const maxAskQuantity = Math.max(...asks.map((a) => a.quantity), 0);
+   const maxQuantity = Math.max(maxBidQuantity, maxAskQuantity);
+
    return (
-      <div className="bg-gray-900 text-white p-4 rounded-lg shadow-lg">
-         <h2 className="text-xl font-bold mb-4 text-center">Order Book</h2>
-         <div className="grid grid-cols-2 gap-4 font-mono text-sm">
-            {/* Asks Column */}
-            <div>
-               <div className="flex justify-between text-gray-400 border-b border-gray-700 pb-1 mb-2">
-                  <span>Price (USD)</span>
-                  <span>Quantity</span>
+      <div className="bg-card backdrop-blur-sm border border-black text-card-foreground p-6 rounded-xl shadow-2xl">
+         <div className="flex items-center justify-center mb-6">
+            <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+            <h2 className="text-2xl font-bold text-center text-foreground">
+               Order Book
+            </h2>
+         </div>
+
+         <div className="space-y-6">
+            {/* Asks Section */}
+            <div className="space-y-1">
+               <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-semibold text-red-400 uppercase tracking-wide flex items-center">
+                     <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                     Asks (Sell Orders)
+                  </h3>
+                  <span className="text-xs text-muted-foreground">Size</span>
                </div>
-               {asks.map((ask, index) => (
-                  <div
-                     key={index}
-                     className="flex justify-between text-red-500"
-                  >
-                     <span>{ask.price.toFixed(2)}</span>
-                     <span>{ask.quantity.toFixed(4)}</span>
-                  </div>
-               ))}
+               <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {asks.length === 0 ? (
+                     <div className="text-center text-muted-foreground py-4 text-sm">
+                        No sell orders
+                     </div>
+                  ) : (
+                     asks
+                        .slice()
+                        .reverse()
+                        .map((ask, index) => (
+                           <div
+                              key={index + 1}
+                              className="relative flex justify-between items-center py-2 px-3 rounded-md hover:bg-red-500/5 transition-colors duration-200 group"
+                           >
+                              <div
+                                 className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent rounded-md"
+                                 style={{
+                                    width: `${(ask.quantity / maxQuantity) * 100}%`,
+                                 }}
+                              ></div>
+                              <span className="relative z-10 text-red-400 font-mono font-semibold">
+                                 ${ask.price.toFixed(2)}
+                              </span>
+                              <span className="relative z-10 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                                 {ask.quantity.toFixed(4)}
+                              </span>
+                           </div>
+                        ))
+                  )}
+               </div>
             </div>
 
-            {/* Bids Column */}
-            <div>
-               <div className="flex justify-between text-gray-400 border-b border-gray-700 pb-1 mb-2">
-                  <span>Price (USD)</span>
-                  <span>Quantity</span>
+            {/* Price Spread Indicator */}
+            <div className="flex items-center justify-center py-3">
+               <div className="flex-1 h-px bg-border"></div>
+               <div className="px-4 py-2 bg-muted rounded-full border">
+                  {/* <span className="text-xs font-medium text-muted-foreground">
+                     SPREAD
+                  </span> */}
                </div>
-               {bids.map((bid, index) => (
-                  <div
-                     key={index}
-                     className="flex justify-between text-green-500"
-                  >
-                     <span>{bid.price.toFixed(2)}</span>
-                     <span>{bid.quantity.toFixed(4)}</span>
-                  </div>
-               ))}
+               <div className="flex-1 h-px bg-border"></div>
+            </div>
+            {/* Bids Section */}
+            <div className="space-y-1">
+               <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-semibold text-green-400 uppercase tracking-wide flex items-center">
+                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                     Bids (Buy Orders)
+                  </h3>
+                  <span className="text-xs text-muted-foreground">Size</span>
+               </div>
+               <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {bids.length === 0 ? (
+                     <div className="text-center text-muted-foreground py-4 text-sm">
+                        No buy orders
+                     </div>
+                  ) : (
+                     bids.map((bid, index) => (
+                        <div
+                           key={index + 1}
+                           className="relative flex justify-between items-center py-2 px-3 rounded-md hover:bg-green-500/5 transition-colors duration-200 group"
+                        >
+                           <div
+                              className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-transparent rounded-md"
+                              style={{
+                                 width: `${(bid.quantity / maxQuantity) * 100}%`,
+                              }}
+                           ></div>
+                           <span className="relative z-10 text-green-400 font-mono font-semibold">
+                              ${bid.price.toFixed(2)}
+                           </span>
+                           <span className="relative z-10 text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                              {bid.quantity.toFixed(4)}
+                           </span>
+                        </div>
+                     ))
+                  )}
+               </div>
             </div>
          </div>
       </div>
