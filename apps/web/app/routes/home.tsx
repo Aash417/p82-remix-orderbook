@@ -1,33 +1,70 @@
+import { useQuery, useSubscription } from '@apollo/client';
+import { useEffect, useState } from 'react';
 import { OrderbookDisplay } from '~/components/OrderbookDisplay';
 import { OrderForm } from '~/components/OrderForm';
-import { RecentTrades, type Trade } from '~/components/RecentTrades';
-import type { Route } from './+types/home';
+import { RecentTrades } from '~/components/RecentTrades';
+import {
+   GET_ORDERBOOK,
+   TRADE_CREATED_SUBSCRIPTION,
+} from '~/graphql/operations';
 
-export function meta({}: Route.MetaArgs) {
-   return [
-      { title: 'remix orderbook' },
-      { name: 'description', content: 'Welcome to React Router!' },
-   ];
-}
+// A simple type for our trades list
+type Trade = {
+   price: number;
+   quantity: number;
+   time: string;
+   side: 'buy' | 'sell'; // We'll infer this for now
+};
 
-// Mock data to build the UI before we connect to the API
-const mockBids = [
-   { price: 2999.9, quantity: 0.75 },
-   { price: 2999.8, quantity: 1.25 },
-   { price: 2999.7, quantity: 0.5 },
-];
-const mockAsks = [
-   { price: 3000.1, quantity: 0.8 },
-   { price: 3000.2, quantity: 1.5 },
-   { price: 3000.3, quantity: 2.0 },
-];
-const mockTrades: Trade[] = [
-   { price: 3000.0, quantity: 0.1, time: '14:35:12', side: 'buy' },
-   { price: 2999.9, quantity: 0.05, time: '14:35:10', side: 'sell' },
-   { price: 3000.0, quantity: 0.2, time: '14:35:09', side: 'buy' },
-];
+export default function Index() {
+   const [trades, setTrades] = useState<Trade[]>([]);
+   const market = 'BTC-USD'; // Example market
 
-export default function Home() {
+   // 1. Fetch the initial order book data
+   const { loading, error, data, refetch } = useQuery(GET_ORDERBOOK, {
+      variables: { market },
+   });
+
+   // 2. Subscribe to new trades
+   const { data: subscriptionData } = useSubscription(
+      TRADE_CREATED_SUBSCRIPTION,
+      {
+         variables: { market },
+      },
+   );
+
+   // 3. Handle incoming subscription data
+   useEffect(() => {
+      if (subscriptionData?.tradeCreated) {
+         const newTrade = subscriptionData.tradeCreated;
+
+         // Add the new trade to the top of our list
+         setTrades((prevTrades) => [
+            {
+               price: newTrade.price,
+               quantity: newTrade.quantity,
+               time: new Date(newTrade.timestamp).toLocaleTimeString(),
+               side: 'sell', // You would determine this based on more data
+            },
+            ...prevTrades,
+         ]);
+
+         // Refetch the order book since a trade has changed its state
+         refetch();
+      }
+   }, [subscriptionData, refetch]);
+
+   if (loading)
+      return (
+         <p className="text-white text-center p-8">Loading order book...</p>
+      );
+   if (error)
+      return (
+         <p className="text-red-500 text-center p-8">
+            Error loading data: {error.message}
+         </p>
+      );
+
    return (
       <div className="bg-gray-950 min-h-screen p-4 text-white">
          <header className="text-center mb-8">
@@ -35,13 +72,16 @@ export default function Home() {
          </header>
          <main className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
             <div className="md:col-span-1">
-               <OrderForm />
+               <OrderForm onOrderCreated={refetch} />
             </div>
             <div className="md:col-span-1">
-               <OrderbookDisplay bids={mockBids} asks={mockAsks} />
+               <OrderbookDisplay
+                  bids={data?.getOrderbook.bids || []}
+                  asks={data?.getOrderbook.asks || []}
+               />
             </div>
             <div className="md:col-span-1">
-               <RecentTrades trades={mockTrades} />
+               <RecentTrades trades={trades} />
             </div>
          </main>
       </div>

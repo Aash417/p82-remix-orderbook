@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { makeExecutableSchema } from '@graphql-tools/schema';
+import cors from 'cors';
 import express from 'express';
 import { useServer } from 'graphql-ws/use/ws';
 import http from 'http';
@@ -66,6 +67,14 @@ const server = new ApolloServer({
 });
 
 await server.start();
+
+// Configure CORS to allow requests from your frontend
+app.use(
+   cors({
+      origin: ['http://localhost:5173', 'http://localhost:3000'], // Add your frontend URLs
+      credentials: true,
+   }),
+);
 
 // The core of the integration: Apollo Server runs as Express middleware.
 app.use(
