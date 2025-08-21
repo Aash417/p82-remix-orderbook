@@ -35,3 +35,18 @@ export const CREATE_ORDER = gql`
       }
    }
 `;
+
+export const ORDERBOOK_UPDATED_SUBSCRIPTION = gql`
+   subscription OnOrderbookUpdated($market: String!) {
+      orderbookUpdated(market: $market) {
+         bids {
+            price
+            quantity
+         }
+         asks {
+            price
+            quantity
+         }
+      }
+   }
+`;

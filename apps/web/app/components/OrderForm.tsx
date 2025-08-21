@@ -7,7 +7,7 @@ interface OrderFormProps {
    onOrderCreated: () => void;
 }
 
-export function OrderForm({ onOrderCreated }: OrderFormProps) {
+export function OrderForm() {
    const [price, setPrice] = useState('');
    const [quantity, setQuantity] = useState('');
 
@@ -34,7 +34,6 @@ export function OrderForm({ onOrderCreated }: OrderFormProps) {
          // 3. On success, clear the form and call the callback
          setPrice('');
          setQuantity('');
-         onOrderCreated();
       } catch (err) {
          console.error('Order submission failed:', err);
          // The `error` object from the hook will also be populated

@@ -2,6 +2,7 @@ import { MatchingEngine } from '@/core/matchingEngine';
 import { TYPES } from '@/types/inversify.types';
 import { Order, OrderType, Trade } from '@/types/order';
 
+import { Orderbook } from '@/core/orderbook';
 import { randomUUID } from 'crypto';
 import { inject, injectable } from 'inversify';
 import 'reflect-metadata';
@@ -23,6 +24,7 @@ export class OrderService {
    constructor(
       @inject(TYPES.MatchingEngine) private matchingEngine: MatchingEngine,
       @inject(TYPES.PubSubService) private pubSubService: PubSubService,
+      @inject(TYPES.Orderbook) private orderbook: Orderbook,
    ) {}
 
    /**
@@ -43,6 +45,19 @@ export class OrderService {
       console.log(`Processing new order: ${newOrder.id}`);
       const trades = this.matchingEngine.match(newOrder);
       console.log(`Executed ${trades.length} trades.`);
+
+      // After matching, the order book has changed.
+      // Now, publish the entire updated order book.
+      this.pubSubService.pubsub.publish(
+         this.pubSubService.TRIGGERS.ORDERBOOK_UPDATED,
+         {
+            orderbookUpdated: {
+               // Payload must match the schema
+               bids: this.orderbook.bids,
+               asks: this.orderbook.asks,
+            },
+         },
+      );
 
       // --- Publish Events for Each Trade ---
       if (trades.length > 0) {

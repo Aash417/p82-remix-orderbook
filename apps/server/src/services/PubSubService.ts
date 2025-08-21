@@ -8,5 +8,6 @@ export class PubSubService {
 
    public TRIGGERS = {
       TRADE_CREATED: 'TRADE_CREATED',
+      ORDERBOOK_UPDATED: 'ORDERBOOK_UPDATED',
    };
 }

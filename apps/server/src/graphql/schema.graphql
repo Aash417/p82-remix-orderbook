@@ -55,6 +55,6 @@ type Mutation {
 
 # Entry points for real-time data
 type Subscription {
-   "Fires whenever a new trade is executed for a given market"
    tradeCreated(market: String!): Trade
+   orderbookUpdated(market: String!): Orderbook
 }

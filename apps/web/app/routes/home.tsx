@@ -5,64 +5,74 @@ import { OrderForm } from '~/components/OrderForm';
 import { RecentTrades } from '~/components/RecentTrades';
 import {
    GET_ORDERBOOK,
+   ORDERBOOK_UPDATED_SUBSCRIPTION,
    TRADE_CREATED_SUBSCRIPTION,
-} from '~/graphql/operations';
+} from '~/graphql/operations'; // Make sure TRADE_CREATED_SUBSCRIPTION is imported
 
-// A simple type for our trades list
 type Trade = {
    price: number;
    quantity: number;
    time: string;
-   side: 'buy' | 'sell'; // We'll infer this for now
+   side: 'buy' | 'sell';
 };
 
 export default function Index() {
    const [trades, setTrades] = useState<Trade[]>([]);
-   const market = 'BTC-USD'; // Example market
+   const market = 'BTC-USD';
 
-   // 1. Fetch the initial order book data
-   const { loading, error, data, refetch } = useQuery(GET_ORDERBOOK, {
+   const {
+      loading,
+      error,
+      data: orderbookData,
+   } = useQuery(GET_ORDERBOOK, {
       variables: { market },
+      fetchPolicy: 'network-only',
    });
 
-   // 2. Subscribe to new trades
+   // This hook is the key to live updates.
+   // It actively listens for data pushed from the server.
    const { data: subscriptionData } = useSubscription(
       TRADE_CREATED_SUBSCRIPTION,
       {
          variables: { market },
       },
    );
+   const { data: updatedOrderbook } = useSubscription(
+      ORDERBOOK_UPDATED_SUBSCRIPTION,
+      {
+         variables: { market },
+      },
+   );
+   const currentOrderbook =
+      updatedOrderbook?.orderbookUpdated || orderbookData?.getOrderbook;
 
-   // 3. Handle incoming subscription data
+   // This effect runs whenever new data arrives from the subscription.
    useEffect(() => {
       if (subscriptionData?.tradeCreated) {
+         console.log(
+            'New trade received from subscription:',
+            subscriptionData.tradeCreated,
+         );
          const newTrade = subscriptionData.tradeCreated;
 
-         // Add the new trade to the top of our list
+         // Add the new trade to our local state for the UI
          setTrades((prevTrades) => [
             {
                price: newTrade.price,
                quantity: newTrade.quantity,
                time: new Date(newTrade.timestamp).toLocaleTimeString(),
-               side: 'sell', // You would determine this based on more data
+               side: 'buy', // This could be determined more accurately
             },
-            ...prevTrades,
+            ...prevTrades.slice(0, 19), // Keep the list from getting too long
          ]);
-
-         // Refetch the order book since a trade has changed its state
-         refetch();
       }
-   }, [subscriptionData, refetch]);
+   }, [subscriptionData]); // Dependency array ensures this runs when data arrives
 
-   if (loading)
-      return (
-         <p className="text-white text-center p-8">Loading order book...</p>
-      );
+   if (loading && !currentOrderbook)
+      return <p className="text-white text-center p-8">Loading...</p>;
    if (error)
       return (
-         <p className="text-red-500 text-center p-8">
-            Error loading data: {error.message}
-         </p>
+         <p className="text-red-500 text-center p-8">Error: {error.message}</p>
       );
 
    return (
@@ -72,12 +82,12 @@ export default function Index() {
          </header>
          <main className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
             <div className="md:col-span-1">
-               <OrderForm onOrderCreated={refetch} />
+               <OrderForm />
             </div>
             <div className="md:col-span-1">
                <OrderbookDisplay
-                  bids={data?.getOrderbook.bids || []}
-                  asks={data?.getOrderbook.asks || []}
+                  bids={currentOrderbook.bids || []}
+                  asks={currentOrderbook.asks || []}
                />
             </div>
             <div className="md:col-span-1">

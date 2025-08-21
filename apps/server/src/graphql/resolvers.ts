@@ -60,5 +60,13 @@ export const resolvers = {
             },
          ),
       },
+
+      orderbookUpdated: {
+         subscribe: (_, __, context: Context) => {
+            return context.pubSubService.pubsub.asyncIterableIterator([
+               context.pubSubService.TRIGGERS.ORDERBOOK_UPDATED,
+            ]);
+         },
+      },
    },
 };
