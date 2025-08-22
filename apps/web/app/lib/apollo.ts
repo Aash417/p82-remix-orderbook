@@ -5,13 +5,13 @@ import { createClient } from 'graphql-ws';
 
 // Set up the HTTP link for queries and mutations.
 const httpLink = new HttpLink({
-   uri: 'http://localhost:4000/graphql', // Your backend's HTTP endpoint
+   uri: import.meta.env.VITE_GRAPHQL_HTTP_URL,
 });
 
 // Set up the WebSocket link for subscriptions.
 const wsLink = new GraphQLWsLink(
    createClient({
-      url: 'ws://localhost:4000/graphql', // Your backend's WebSocket endpoint
+      url: import.meta.env.VITE_GRAPHQL_WS_URL!,
    }),
 );
 

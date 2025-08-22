@@ -13,9 +13,6 @@ import { OrderService } from '@/services/orderService';
 
 const inversifyContainer = new Container();
 
-// --- Bind Core Classes ---
-// We bind Orderbook as a singleton because we only want one instance of it
-// for the entire application's lifecycle.
 inversifyContainer
    .bind<Orderbook>(TYPES.Orderbook)
    .to(Orderbook)
@@ -29,7 +26,7 @@ inversifyContainer
    .bind<PubSubService>(TYPES.PubSubService)
    .to(PubSubService)
    .inSingletonScope();
-// --- Bind Services ---
+
 inversifyContainer.bind<OrderService>(TYPES.OrderService).to(OrderService);
 
 export { inversifyContainer };

@@ -15,16 +15,6 @@ export const GET_ORDERBOOK = gql`
    }
 `;
 
-export const TRADE_CREATED_SUBSCRIPTION = gql`
-   subscription OnTradeCreated($market: String!) {
-      tradeCreated(market: $market) {
-         price
-         quantity
-         timestamp
-      }
-   }
-`;
-
 export const CREATE_ORDER = gql`
    mutation CreateOrder($price: Float!, $quantity: Float!, $type: OrderType!) {
       createOrder(price: $price, quantity: $quantity, type: $type) {
@@ -32,6 +22,18 @@ export const CREATE_ORDER = gql`
          price
          quantity
          type
+      }
+   }
+`;
+
+export const TRADE_CREATED_SUBSCRIPTION = gql`
+   subscription OnTradeCreated($market: String!) {
+      tradeCreated(market: $market) {
+         id
+         side
+         price
+         quantity
+         timestamp
       }
    }
 `;

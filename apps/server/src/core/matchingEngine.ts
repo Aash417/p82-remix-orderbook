@@ -2,28 +2,21 @@ import { TYPES } from '@/types/inversify.types';
 import { Order, Trade } from '@/types/order';
 import { randomUUID } from 'crypto';
 import { inject, injectable } from 'inversify';
-import 'reflect-metadata';
 import { Orderbook } from './orderbook';
 
-@injectable() // Mark this class as manageable by Inversify
+@injectable()
 export class MatchingEngine {
-   // Inversify will inject the singleton Orderbook instance here.
    constructor(
       @inject(TYPES.Orderbook) private readonly orderbook: Orderbook,
    ) {}
-   /**
-    * Processes a new incoming order (taker order).
-    * @param takerOrder The new order to be matched.
-    * @returns An array of trades that were executed.
-    */
+
    match(takerOrder: Order): Trade[] {
       const trades: Trade[] = [];
       let remainingQuantity = takerOrder.quantity;
 
       if (takerOrder.type === 'BUY') {
-         // Match against asks (sell orders)
          while (remainingQuantity > 0 && this.orderbook.asks.length > 0) {
-            const bestAsk = this.orderbook.getBestAsk()!;
+            const bestAsk = this.orderbook.getBestAsk();
             if (takerOrder.price < bestAsk.price) {
                // Taker's buy price is lower than the best sell price, no more matches possible.
                break;
@@ -31,9 +24,9 @@ export class MatchingEngine {
 
             const tradeQuantity = Math.min(remainingQuantity, bestAsk.quantity);
 
-            // Create the trade
             trades.push({
                id: randomUUID(),
+               side: takerOrder.type,
                price: bestAsk.price, // Trade executes at the maker's price
                quantity: tradeQuantity,
                timestamp: Date.now(),
@@ -50,10 +43,8 @@ export class MatchingEngine {
             }
          }
       } else {
-         // 'SELL'
-         // Match against bids (buy orders)
          while (remainingQuantity > 0 && this.orderbook.bids.length > 0) {
-            const bestBid = this.orderbook.getBestBid()!;
+            const bestBid = this.orderbook.getBestBid();
             if (takerOrder.price > bestBid.price) {
                // Taker's sell price is higher than the best buy price, no more matches possible.
                break;
@@ -68,6 +59,7 @@ export class MatchingEngine {
                timestamp: Date.now(),
                makerOrderId: bestBid.id,
                takerOrderId: takerOrder.id,
+               side: takerOrder.type,
             });
 
             remainingQuantity -= tradeQuantity;

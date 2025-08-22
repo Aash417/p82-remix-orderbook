@@ -2,7 +2,7 @@ export type Trade = {
    price: number;
    quantity: number;
    time: string;
-   side: 'buy' | 'sell';
+   side: 'BUY' | 'SELL';
 };
 
 interface RecentTradesProps {
@@ -11,7 +11,7 @@ interface RecentTradesProps {
 
 export function RecentTrades({ trades }: Readonly<RecentTradesProps>) {
    return (
-      <div className="bg-gradient-to-br from-card to-card/50 backdrop-blur-sm border border-black text-card-foreground p-6 rounded-xl shadow-2xl">
+      <div className="bg-card backdrop-blur-sm border border-black  text-card-foreground p-6 rounded-xl shadow-2xl">
          <div className="flex items-center justify-center mb-6">
             <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
             <h2 className="text-2xl font-bold text-center text-foreground">
@@ -57,7 +57,7 @@ export function RecentTrades({ trades }: Readonly<RecentTradesProps>) {
                            flex justify-between items-center py-2 px-3 rounded-lg 
                            transition-all duration-200 hover:bg-muted/10 group
                            ${
-                              trade.side === 'buy'
+                              trade.side === 'BUY'
                                  ? 'border-l-2 border-green-500/50 hover:border-green-500 hover:bg-green-500/5'
                                  : 'border-l-2 border-red-500/50 hover:border-red-500 hover:bg-red-500/5'
                            }
@@ -65,7 +65,7 @@ export function RecentTrades({ trades }: Readonly<RecentTradesProps>) {
                      >
                         <span
                            className={`font-mono font-semibold ${
-                              trade.side === 'buy'
+                              trade.side === 'BUY'
                                  ? 'text-green-400'
                                  : 'text-red-400'
                            }`}

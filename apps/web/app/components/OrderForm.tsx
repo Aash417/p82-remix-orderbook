@@ -72,9 +72,6 @@ export function OrderForm() {
                   Quantity
                </Label>
                <div className="relative">
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">
-                     BTC
-                  </span>
                   <Input
                      type="number"
                      id="quantity"
@@ -82,7 +79,7 @@ export function OrderForm() {
                      onChange={(e) => setQuantity(e.target.value)}
                      disabled={loading}
                      placeholder="0.0000"
-                     className="pr-12 h-12 border-2 focus:border-blue-500 transition-all duration-200 bg-background/50"
+                     className="pr-3 h-12 border-2 focus:border-blue-500 transition-all duration-200 bg-background/50"
                   />
                </div>
             </div>

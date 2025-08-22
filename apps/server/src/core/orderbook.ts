@@ -1,10 +1,8 @@
 import { Order, OrderId, OrderType } from '@/types/order';
 import { injectable } from 'inversify';
-import 'reflect-metadata'; // Required for Inversify
 
 @injectable() // Marks this class as manageable by Inversify.
 export class Orderbook {
-   // ... rest of the file is identical to Phase 2
    public bids: Order[] = [];
    public asks: Order[] = [];
 

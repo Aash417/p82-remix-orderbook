@@ -8,17 +8,21 @@ import {
    GET_ORDERBOOK,
    ORDERBOOK_UPDATED_SUBSCRIPTION,
    TRADE_CREATED_SUBSCRIPTION,
-} from '~/graphql/operations'; // Make sure TRADE_CREATED_SUBSCRIPTION is imported
+} from '~/graphql/operations';
 
 type Trade = {
    price: number;
    quantity: number;
    time: string;
-   side: 'buy' | 'sell';
+   side: 'BUY' | 'SELL';
 };
 
 export default function Home() {
    const [trades, setTrades] = useState<Trade[]>([]);
+   const [orderbook, setOrderbook] = useState<{ bids: any[]; asks: any[] }>({
+      bids: [],
+      asks: [],
+   });
    const market = 'BTC-USD';
 
    const {
@@ -30,46 +34,42 @@ export default function Home() {
       fetchPolicy: 'network-only',
    });
 
-   // This hook is the key to live updates.
-   // It actively listens for data pushed from the server.
-   const { data: subscriptionData } = useSubscription(
-      TRADE_CREATED_SUBSCRIPTION,
-      {
-         variables: { market },
-      },
-   );
-   const { data: updatedOrderbook } = useSubscription(
+   const { data: tradeSubData } = useSubscription(TRADE_CREATED_SUBSCRIPTION, {
+      variables: { market },
+   });
+   const { data: orderbookSubData } = useSubscription(
       ORDERBOOK_UPDATED_SUBSCRIPTION,
-      {
-         variables: { market },
-      },
+      { variables: { market } },
    );
-   const currentOrderbook =
-      updatedOrderbook?.orderbookUpdated || orderbookData?.getOrderbook;
 
-   // This effect runs whenever new data arrives from the subscription.
    useEffect(() => {
-      if (subscriptionData?.tradeCreated) {
-         console.log(
-            'New trade received from subscription:',
-            subscriptionData.tradeCreated,
-         );
-         const newTrade = subscriptionData.tradeCreated;
+      if (orderbookData?.getOrderbook) {
+         setOrderbook(orderbookData.getOrderbook);
+      }
+   }, [orderbookData]);
 
-         // Add the new trade to our local state for the UI
-         setTrades((prevTrades) => [
+   useEffect(() => {
+      if (orderbookSubData?.orderbookUpdated) {
+         setOrderbook(orderbookSubData.orderbookUpdated);
+      }
+   }, [orderbookSubData]);
+
+   useEffect(() => {
+      if (tradeSubData?.tradeCreated) {
+         const newTrade = tradeSubData.tradeCreated;
+         setTrades((prev) => [
             {
                price: newTrade.price,
                quantity: newTrade.quantity,
                time: new Date(newTrade.timestamp).toLocaleTimeString(),
-               side: 'buy', // This could be determined more accurately
+               side: newTrade.side,
             },
-            ...prevTrades.slice(0, 19), // Keep the list from getting too long
+            ...prev.slice(0, 9),
          ]);
       }
-   }, [subscriptionData]); // Dependency array ensures this runs when data arrives
+   }, [tradeSubData]);
 
-   if (loading && !currentOrderbook)
+   if (loading && orderbook.bids.length === 0 && orderbook.asks.length === 0)
       return <p className="text-center p-8">Loading...</p>;
    if (error)
       return (
@@ -88,7 +88,7 @@ export default function Home() {
                   <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse" />
                </div>
                <p className="text-muted-foreground text-lg">
-                  Real-time cryptocurrency trading orderbook
+                  Real-time trading orderbook
                </p>
                <div className="absolute top-4 right-4">
                   <ModeToggle />
@@ -101,8 +101,8 @@ export default function Home() {
                </div>
                <div className="md:col-span-1 space-y-6">
                   <OrderbookDisplay
-                     bids={currentOrderbook?.bids || []}
-                     asks={currentOrderbook?.asks || []}
+                     bids={orderbook.bids}
+                     asks={orderbook.asks}
                   />
                </div>
                <div className="md:col-span-1 space-y-6">

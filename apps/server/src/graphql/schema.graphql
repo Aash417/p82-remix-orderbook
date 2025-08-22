@@ -1,10 +1,8 @@
-# Defines the possible types for an order
 enum OrderType {
    BUY
    SELL
 }
 
-# Defines the possible statuses of an order
 enum OrderStatus {
    OPEN
    FILLED
@@ -12,7 +10,6 @@ enum OrderStatus {
    CANCELLED
 }
 
-# Represents a single order in the order book
 type Order {
    id: ID!
    price: Float!
@@ -22,7 +19,6 @@ type Order {
    createdAt: Float!
 }
 
-# Represents an executed trade between two orders
 type Trade {
    id: ID!
    price: Float!
@@ -30,30 +26,23 @@ type Trade {
    timestamp: Float!
    makerOrderId: ID!
    takerOrderId: ID!
+   side: OrderType!
 }
 
-# Represents the current state of the order book
 type Orderbook {
    bids: [Order!]!
    asks: [Order!]!
 }
 
-# Entry points for reading data
 type Query {
-   "A simple query for health checks"
    ping: String
-
-   "Retrieves the current state of the order book for a given market"
    getOrderbook(market: String!): Orderbook
 }
 
-# Entry points for changing data
 type Mutation {
-   "Creates a new order and submits it to the matching engine"
    createOrder(price: Float!, quantity: Float!, type: OrderType!): Order
 }
 
-# Entry points for real-time data
 type Subscription {
    tradeCreated(market: String!): Trade
    orderbookUpdated(market: String!): Orderbook

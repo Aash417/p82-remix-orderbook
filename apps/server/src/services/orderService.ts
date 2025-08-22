@@ -22,23 +22,20 @@ interface CreateOrderResult {
 @injectable()
 export class OrderService {
    constructor(
-      @inject(TYPES.MatchingEngine) private matchingEngine: MatchingEngine,
-      @inject(TYPES.PubSubService) private pubSubService: PubSubService,
-      @inject(TYPES.Orderbook) private orderbook: Orderbook,
+      @inject(TYPES.MatchingEngine)
+      private readonly matchingEngine: MatchingEngine,
+      @inject(TYPES.PubSubService)
+      private readonly pubSubService: PubSubService,
+      @inject(TYPES.Orderbook) private readonly orderbook: Orderbook,
    ) {}
 
-   /**
-    * Creates a new order and processes it through the matching engine.
-    * @param input The data for the new order.
-    * @returns The newly created order and any trades that resulted from it.
-    */
    public createOrder(input: CreateOrderInput): CreateOrderResult {
       const newOrder: Order = {
          id: randomUUID(),
          price: input.price,
          quantity: input.quantity,
          type: input.type,
-         status: 'OPEN', // The order starts as OPEN
+         status: 'OPEN',
          createdAt: Date.now(),
       };
 
@@ -46,13 +43,11 @@ export class OrderService {
       const trades = this.matchingEngine.match(newOrder);
       console.log(`Executed ${trades.length} trades.`);
 
-      // After matching, the order book has changed.
-      // Now, publish the entire updated order book.
+      // publish the entire updated order book.
       this.pubSubService.pubsub.publish(
          this.pubSubService.TRIGGERS.ORDERBOOK_UPDATED,
          {
             orderbookUpdated: {
-               // Payload must match the schema
                bids: this.orderbook.bids,
                asks: this.orderbook.asks,
             },
@@ -65,7 +60,7 @@ export class OrderService {
          trades.forEach((trade) => {
             this.pubSubService.pubsub.publish(
                this.pubSubService.TRIGGERS.TRADE_CREATED,
-               { tradeCreated: trade }, // The payload must match the schema
+               { tradeCreated: trade },
             );
          });
       }
@@ -73,12 +68,7 @@ export class OrderService {
       return { order: newOrder, trades };
    }
 
-   /**
-    * Gets the current orderbook state.
-    * @returns The current orderbook with bids and asks.
-    */
    public getOrderbook() {
-      // Access the orderbook through the matching engine
-      return (this.matchingEngine as any).orderbook;
+      return this.orderbook;
    }
 }

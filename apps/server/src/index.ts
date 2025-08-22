@@ -6,17 +6,15 @@ import cors from 'cors';
 import express from 'express';
 import { useServer } from 'graphql-ws/use/ws';
 import http from 'http';
+import 'reflect-metadata';
 import { WebSocketServer } from 'ws';
 
-// Inversify and services
+import { resolvers } from '@/graphql/resolvers';
+import { typeDefs } from '@/graphql/schema';
+import { OrderService } from '@/services/orderService';
+import { PubSubService } from '@/services/PubSubService';
+import { TYPES } from '@/types/inversify.types';
 import { inversifyContainer } from '../inversify.config';
-import { OrderService } from './services/orderService';
-import { PubSubService } from './services/PubSubService';
-import { TYPES } from './types/inversify.types';
-
-// Your GraphQL Schema and Resolvers
-import { resolvers } from './graphql/resolvers';
-import { typeDefs } from './graphql/schema';
 
 const PORT = 4000;
 
@@ -36,7 +34,7 @@ const pubSubService = inversifyContainer.get<PubSubService>(
    TYPES.PubSubService,
 );
 
-// This function handles the WebSocket connection with proper context
+//  handles the WebSocket connection with proper context
 const serverCleanup = useServer(
    {
       schema,
@@ -68,15 +66,14 @@ const server = new ApolloServer({
 
 await server.start();
 
-// Configure CORS to allow requests from your frontend
 app.use(
    cors({
-      origin: ['http://localhost:5173', 'http://localhost:3000'], // Add your frontend URLs
+      origin: ['http://localhost:5173', 'http://localhost:3000'],
       credentials: true,
    }),
 );
 
-// The core of the integration: Apollo Server runs as Express middleware.
+// Apollo Server runs as Express middleware.
 app.use(
    '/graphql',
    express.json(),

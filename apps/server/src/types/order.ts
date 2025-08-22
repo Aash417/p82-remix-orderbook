@@ -1,25 +1,21 @@
-// A unique identifier for an order, typically a string.
 export type OrderId = string;
 
-// The type of order, either to buy or to sell.
 export type OrderType = 'BUY' | 'SELL';
 
-// The current status of an order.
 export type OrderStatus = 'OPEN' | 'FILLED' | 'PARTIALLY_FILLED' | 'CANCELLED';
 
-// Represents a single order in the order book.
 export interface Order {
    id: OrderId;
    price: number;
    quantity: number;
    type: OrderType;
    status: OrderStatus;
-   createdAt: number; // Using timestamp for time-priority
+   createdAt: number;
 }
 
-// Represents an executed trade between two orders.
 export interface Trade {
    id: string;
+   side: OrderType;
    price: number;
    quantity: number;
    timestamp: number;
