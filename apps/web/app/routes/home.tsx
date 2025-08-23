@@ -1,80 +1,24 @@
-import { useQuery, useSubscription } from '@apollo/client';
-import { useEffect, useState } from 'react';
+import type { MetaFunction } from 'react-router';
 import { OrderbookDisplay } from '~/components/OrderbookDisplay';
 import { OrderForm } from '~/components/OrderForm';
 import { RecentTrades } from '~/components/RecentTrades';
 import { ModeToggle } from '~/components/theme-toggle';
-import {
-   GET_ORDERBOOK,
-   ORDERBOOK_UPDATED_SUBSCRIPTION,
-   TRADE_CREATED_SUBSCRIPTION,
-} from '~/graphql/operations';
+import { useOrderbook } from '~/lib/useOrderbook';
 
-type Trade = {
-   price: number;
-   quantity: number;
-   time: string;
-   side: 'BUY' | 'SELL';
+export const meta: MetaFunction = () => {
+   return [
+      { title: 'orderbook' },
+      { name: 'description', content: 'graphql-orderbook' },
+   ];
 };
 
 export default function Home() {
-   const [trades, setTrades] = useState<Trade[]>([]);
-   const [orderbook, setOrderbook] = useState<{ bids: any[]; asks: any[] }>({
-      bids: [],
-      asks: [],
-   });
    const market = 'BTC-USD';
+   const { orderbook, trades, error, isLoading } = useOrderbook(market);
 
-   const {
-      loading,
-      error,
-      data: orderbookData,
-   } = useQuery(GET_ORDERBOOK, {
-      variables: { market },
-      fetchPolicy: 'network-only',
-   });
-
-   const { data: tradeSubData } = useSubscription(TRADE_CREATED_SUBSCRIPTION, {
-      variables: { market },
-   });
-   const { data: orderbookSubData } = useSubscription(
-      ORDERBOOK_UPDATED_SUBSCRIPTION,
-      { variables: { market } },
-   );
-
-   useEffect(() => {
-      if (orderbookData?.getOrderbook) {
-         setOrderbook(orderbookData.getOrderbook);
-      }
-   }, [orderbookData]);
-
-   useEffect(() => {
-      if (orderbookSubData?.orderbookUpdated) {
-         setOrderbook(orderbookSubData.orderbookUpdated);
-      }
-   }, [orderbookSubData]);
-
-   useEffect(() => {
-      if (tradeSubData?.tradeCreated) {
-         const newTrade = tradeSubData.tradeCreated;
-         setTrades((prev) => [
-            {
-               price: newTrade.price,
-               quantity: newTrade.quantity,
-               time: new Date(newTrade.timestamp).toLocaleTimeString(),
-               side: newTrade.side,
-            },
-            ...prev.slice(0, 9),
-         ]);
-      }
-   }, [tradeSubData]);
-
-   if (loading && orderbook.bids.length === 0 && orderbook.asks.length === 0)
-      return <p className="text-center p-8">Loading...</p>;
+   if (isLoading) return <p className="text-center p-8">Loading...</p>;
    if (error)
-      return (
-         <p className="text-red-500 text-center p-8">Error: {error.message}</p>
-      );
+      return <p className="text-red-500 text-center p-8">Error: {error}</p>;
 
    return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 relative overflow-hidden">

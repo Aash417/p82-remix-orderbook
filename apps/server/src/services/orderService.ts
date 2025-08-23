@@ -41,7 +41,6 @@ export class OrderService {
 
       console.log(`Processing new order: ${newOrder.id}`);
       const trades = this.matchingEngine.match(newOrder);
-      console.log(`Executed ${trades.length} trades.`);
 
       // publish the entire updated order book.
       this.pubSubService.pubsub.publish(
@@ -56,7 +55,6 @@ export class OrderService {
 
       // --- Publish Events for Each Trade ---
       if (trades.length > 0) {
-         console.log(`Publishing ${trades.length} trade events...`);
          trades.forEach((trade) => {
             this.pubSubService.pubsub.publish(
                this.pubSubService.TRIGGERS.TRADE_CREATED,
