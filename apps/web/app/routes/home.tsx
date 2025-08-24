@@ -22,7 +22,7 @@ export async function loader() {
       const { data } = await apolloClient.query({
          query: GET_ORDERBOOK,
          variables: { market },
-         fetchPolicy: 'network-only', //  fresh data
+         fetchPolicy: 'no-cache',
       });
 
       return {
