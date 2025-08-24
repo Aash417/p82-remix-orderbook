@@ -84,6 +84,9 @@ app.use(
       }),
    }),
 );
+app.get('/', (req, res) => {
+   res.json({ msg: 'Server is up' });
+});
 
 httpServer.listen(PORT, () => {
    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);

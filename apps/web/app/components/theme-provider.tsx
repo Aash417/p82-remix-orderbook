@@ -26,11 +26,21 @@ export function ThemeProvider({
    storageKey = 'vite-ui-theme',
    ...props
 }: Readonly<ThemeProviderProps>) {
-   const [theme, setTheme] = useState<Theme>(
-      () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
-   );
+   // Safe initial theme retrieval for SSR (no window/localStorage on server)
+   const getInitialTheme = (): Theme => {
+      if (typeof window === 'undefined') return defaultTheme;
+      try {
+         const stored = window.localStorage.getItem(storageKey) as Theme | null;
+         return stored || defaultTheme;
+      } catch {
+         return defaultTheme;
+      }
+   };
+
+   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
    useEffect(() => {
+      if (typeof window === 'undefined') return; // Extra safety
       const root = window.document.documentElement;
 
       root.classList.remove('light', 'dark');
@@ -51,9 +61,15 @@ export function ThemeProvider({
    const value = useMemo(
       () => ({
          theme,
-         setTheme: (theme: Theme) => {
-            localStorage.setItem(storageKey, theme);
-            setTheme(theme);
+         setTheme: (t: Theme) => {
+            if (typeof window !== 'undefined') {
+               try {
+                  window.localStorage.setItem(storageKey, t);
+               } catch {
+                  // Ignore write errors (e.g., privacy mode)
+               }
+            }
+            setTheme(t);
          },
       }),
       [theme, storageKey],

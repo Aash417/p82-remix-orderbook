@@ -10,6 +10,7 @@ export type OrderbookMachineContext = {
 
 export type OrderbookMachineEvent =
    | { type: 'FETCH_ORDERBOOK'; market: string }
+   | { type: 'INITIALIZE_WITH_DATA'; data: Orderbook }
    | { type: 'ORDERBOOK_LOADED'; data: Orderbook }
    | { type: 'ORDERBOOK_UPDATED'; data: Orderbook }
    | { type: 'TRADE_RECEIVED'; data: Trade }
@@ -27,6 +28,10 @@ export const orderbookMachine = setup({
       clearError: assign({
          error: null,
          retryCount: 0,
+      }),
+      initializeWithData: assign({
+         orderbook: ({ event }) => (event as any).data,
+         error: null,
       }),
       setOrderbook: assign({
          orderbook: ({ event }) => (event as any).data,
@@ -73,6 +78,10 @@ export const orderbookMachine = setup({
             FETCH_ORDERBOOK: {
                target: 'loading',
                actions: 'clearError',
+            },
+            INITIALIZE_WITH_DATA: {
+               target: 'ready',
+               actions: 'initializeWithData',
             },
          },
       },

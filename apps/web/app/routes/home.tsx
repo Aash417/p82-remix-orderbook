@@ -1,8 +1,11 @@
 import type { MetaFunction } from 'react-router';
+import { useLoaderData } from 'react-router';
 import { OrderbookDisplay } from '~/components/OrderbookDisplay';
 import { OrderForm } from '~/components/OrderForm';
 import { RecentTrades } from '~/components/RecentTrades';
 import { ModeToggle } from '~/components/theme-toggle';
+import { GET_ORDERBOOK } from '~/graphql/operations';
+import { apolloClient } from '~/lib/apollo';
 import { useOrderbook } from '~/lib/useOrderbook';
 
 export const meta: MetaFunction = () => {
@@ -12,13 +15,49 @@ export const meta: MetaFunction = () => {
    ];
 };
 
-export default function Home() {
+export async function loader() {
    const market = 'BTC-USD';
-   const { orderbook, trades, error, isLoading } = useOrderbook(market);
+
+   try {
+      const { data } = await apolloClient.query({
+         query: GET_ORDERBOOK,
+         variables: { market },
+         fetchPolicy: 'network-only', //  fresh data
+      });
+
+      return {
+         initialOrderbook: data?.getOrderbook || { bids: [], asks: [] },
+         market,
+      };
+   } catch (error) {
+      console.error('Failed to load initial orderbook:', error);
+      return {
+         initialOrderbook: { bids: [], asks: [] },
+         market,
+         error:
+            error instanceof Error ? error.message : 'Failed to load orderbook',
+      };
+   }
+}
+
+export default function Home() {
+   const {
+      initialOrderbook,
+      market,
+      error: loaderError,
+   } = useLoaderData<typeof loader>();
+   const { orderbook, trades, error, isLoading } = useOrderbook(
+      market,
+      initialOrderbook,
+   );
 
    if (isLoading) return <p className="text-center p-8">Loading...</p>;
-   if (error)
-      return <p className="text-red-500 text-center p-8">Error: {error}</p>;
+   if (error || loaderError)
+      return (
+         <p className="text-red-500 text-center p-8">
+            Error: {error || loaderError}
+         </p>
+      );
 
    return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/95 relative overflow-hidden">

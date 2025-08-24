@@ -9,7 +9,7 @@ import {
 import { orderbookMachine, type OrderbookMachineEvent } from './stateMachine';
 import type { Trade } from './types';
 
-export const useOrderbook = (market: string) => {
+export const useOrderbook = (market: string, initialOrderbook?: any) => {
    const [state, send] = useMachine(orderbookMachine);
 
    const sendRef = useRef(send);
@@ -26,6 +26,7 @@ export const useOrderbook = (market: string) => {
       GET_ORDERBOOK,
       {
          variables: { market },
+         skip: !!initialOrderbook, // Skip query if we have initial data
          onError: (error) =>
             sendAction({ type: 'LOAD_ERROR', error: error.message }),
       },
@@ -47,17 +48,19 @@ export const useOrderbook = (market: string) => {
    );
 
    useEffect(() => {
-      sendAction({ type: 'FETCH_ORDERBOOK', market });
-   }, [market, sendAction]);
-
-   useEffect(() => {
-      if (orderbookData?.getOrderbook && !orderbookLoading) {
-         sendAction({
-            type: 'ORDERBOOK_LOADED',
-            data: orderbookData.getOrderbook,
-         });
+      if (initialOrderbook) {
+         sendAction({ type: 'INITIALIZE_WITH_DATA', data: initialOrderbook });
+      } else {
+         // Start fetching the orderbook
+         sendAction({ type: 'FETCH_ORDERBOOK', market });
+         if (orderbookData?.getOrderbook && !orderbookLoading) {
+            sendAction({
+               type: 'ORDERBOOK_LOADED',
+               data: orderbookData.getOrderbook,
+            });
+         }
       }
-   }, [orderbookData, orderbookLoading, sendAction]);
+   }, [initialOrderbook, orderbookData, orderbookLoading, sendAction]);
 
    useEffect(() => {
       if (orderbookSubData?.orderbookUpdated) {
