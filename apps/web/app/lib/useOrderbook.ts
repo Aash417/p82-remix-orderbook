@@ -1,4 +1,4 @@
-import { useQuery, useSubscription } from '@apollo/client';
+import { useQuery, useSubscription } from '@apollo/client/react';
 import { useMachine } from '@xstate/react';
 import { useCallback, useEffect, useRef } from 'react';
 import {
@@ -6,6 +6,15 @@ import {
    ORDERBOOK_UPDATED_SUBSCRIPTION,
    TRADE_CREATED_SUBSCRIPTION,
 } from '~/graphql/operations';
+import { askQuantityVar, bidQuantityVar } from '~/lib/apollo';
+import type {
+   GetOrderbookQuery,
+   GetOrderbookQueryVariables,
+   OrderbookUpdatedSubscription,
+   OrderbookUpdatedSubscriptionVariables,
+   TradeCreatedSubscription,
+   TradeCreatedSubscriptionVariables,
+} from '~/lib/types';
 import { orderbookMachine, type OrderbookMachineEvent } from './stateMachine';
 import type { Trade } from './types';
 
@@ -22,34 +31,48 @@ export const useOrderbook = (market: string, initialOrderbook?: any) => {
       sendRef.current(action);
    }, []);
 
-   const { data: orderbookData, loading: orderbookLoading } = useQuery(
-      GET_ORDERBOOK,
-      {
-         variables: { market },
-         skip: !!initialOrderbook, // Skip query if we have initial data
-         onError: (error) =>
-            sendAction({ type: 'LOAD_ERROR', error: error.message }),
-      },
-   );
+   const { data: orderbookData, loading: orderbookLoading } = useQuery<
+      GetOrderbookQuery,
+      GetOrderbookQueryVariables
+   >(GET_ORDERBOOK, {
+      variables: { market },
+      skip: !!initialOrderbook, // Skip query if we have initial data
+   });
 
-   const { data: tradeSubData } = useSubscription(TRADE_CREATED_SUBSCRIPTION, {
+   const { data: tradeSubData } = useSubscription<
+      TradeCreatedSubscription,
+      TradeCreatedSubscriptionVariables
+   >(TRADE_CREATED_SUBSCRIPTION, {
       variables: { market },
       onError: (error) =>
          sendAction({ type: 'SUBSCRIPTION_ERROR', error: error.message }),
    });
 
-   const { data: orderbookSubData } = useSubscription(
-      ORDERBOOK_UPDATED_SUBSCRIPTION,
-      {
-         variables: { market },
-         onError: (error) =>
-            sendAction({ type: 'SUBSCRIPTION_ERROR', error: error.message }),
-      },
-   );
+   const { data: orderbookSubData } = useSubscription<
+      OrderbookUpdatedSubscription,
+      OrderbookUpdatedSubscriptionVariables
+   >(ORDERBOOK_UPDATED_SUBSCRIPTION, {
+      variables: { market },
+      onError: (error) =>
+         sendAction({ type: 'SUBSCRIPTION_ERROR', error: error.message }),
+   });
 
    useEffect(() => {
       if (initialOrderbook) {
          sendAction({ type: 'INITIALIZE_WITH_DATA', data: initialOrderbook });
+         // initialize local total quantities from initial data
+         bidQuantityVar(
+            initialOrderbook.bids?.reduce(
+               (s: number, o: any) => s + (o.quantity ?? 0),
+               0,
+            ) ?? 0,
+         );
+         askQuantityVar(
+            initialOrderbook.asks?.reduce(
+               (s: number, o: any) => s + (o.quantity ?? 0),
+               0,
+            ) ?? 0,
+         );
       } else {
          // Start fetching the orderbook
          sendAction({ type: 'FETCH_ORDERBOOK', market });
@@ -58,6 +81,19 @@ export const useOrderbook = (market: string, initialOrderbook?: any) => {
                type: 'ORDERBOOK_LOADED',
                data: orderbookData.getOrderbook,
             });
+            // set total quantities from fetched data
+            bidQuantityVar(
+               orderbookData.getOrderbook.bids?.reduce(
+                  (s: number, o: any) => s + (o.quantity ?? 0),
+                  0,
+               ) ?? 0,
+            );
+            askQuantityVar(
+               orderbookData.getOrderbook.asks?.reduce(
+                  (s: number, o: any) => s + (o.quantity ?? 0),
+                  0,
+               ) ?? 0,
+            );
          }
       }
    }, [initialOrderbook, orderbookData, orderbookLoading, sendAction]);
@@ -69,6 +105,19 @@ export const useOrderbook = (market: string, initialOrderbook?: any) => {
                type: 'ORDERBOOK_UPDATED',
                data: orderbookSubData.orderbookUpdated,
             });
+            // update total quantities on subscription
+            bidQuantityVar(
+               orderbookSubData.orderbookUpdated.bids?.reduce(
+                  (s: number, o: any) => s + (o.quantity ?? 0),
+                  0,
+               ) ?? 0,
+            );
+            askQuantityVar(
+               orderbookSubData.orderbookUpdated.asks?.reduce(
+                  (s: number, o: any) => s + (o.quantity ?? 0),
+                  0,
+               ) ?? 0,
+            );
          }
       }
    }, [orderbookSubData, sendAction]);
@@ -92,9 +141,11 @@ export const useOrderbook = (market: string, initialOrderbook?: any) => {
    };
 };
 
-const formatTradeForDisplay = (trade: Trade) => ({
-   price: trade.price,
-   quantity: trade.quantity,
-   time: new Date(trade.timestamp).toLocaleTimeString(),
-   side: trade.side,
-});
+function formatTradeForDisplay(trade: Trade) {
+   return {
+      price: trade.price,
+      quantity: trade.quantity,
+      time: new Date(trade.timestamp).toLocaleTimeString(),
+      side: trade.side,
+   };
+}

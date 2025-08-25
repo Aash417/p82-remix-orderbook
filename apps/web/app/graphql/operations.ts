@@ -52,3 +52,10 @@ export const ORDERBOOK_UPDATED_SUBSCRIPTION = gql`
       }
    }
 `;
+
+export const GET_ORDER_COUNTS = gql`
+   query GetOrderQuantities {
+      bidQuantity @client
+      askQuantity @client
+   }
+`;

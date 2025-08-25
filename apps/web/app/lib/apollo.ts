@@ -1,4 +1,10 @@
-import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client';
+import {
+   ApolloClient,
+   HttpLink,
+   InMemoryCache,
+   makeVar,
+   split,
+} from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
@@ -21,7 +27,7 @@ const wsLink =
       : null;
 
 // The split function can send data to each link depending on what kind of operation is being sent.
-const splitLink = wsLink
+const link = wsLink
    ? split(
         ({ query }) => {
            const definition = getMainDefinition(query);
@@ -35,8 +41,29 @@ const splitLink = wsLink
      )
    : httpLink; // Use only HTTP link on server-side
 
+export const bidQuantityVar = makeVar<number>(0);
+export const askQuantityVar = makeVar<number>(0);
+
+const cache = new InMemoryCache({
+   typePolicies: {
+      Query: {
+         fields: {
+            bidQuantity: {
+               read() {
+                  return bidQuantityVar();
+               },
+            },
+            askQuantity: {
+               read() {
+                  return askQuantityVar();
+               },
+            },
+         },
+      },
+   },
+});
+
 export const apolloClient = new ApolloClient({
-   link: splitLink,
-   cache: new InMemoryCache(),
-   ssrMode: typeof window === 'undefined', // Enable SSR mode on server
+   link,
+   cache,
 });

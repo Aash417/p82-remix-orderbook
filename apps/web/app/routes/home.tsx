@@ -6,6 +6,10 @@ import { RecentTrades } from '~/components/RecentTrades';
 import { ModeToggle } from '~/components/theme-toggle';
 import { GET_ORDERBOOK } from '~/graphql/operations';
 import { apolloClient } from '~/lib/apollo';
+import type {
+   GetOrderbookQuery,
+   GetOrderbookQueryVariables,
+} from '~/lib/types';
 import { useOrderbook } from '~/lib/useOrderbook';
 
 export const meta: MetaFunction = () => {
@@ -19,7 +23,10 @@ export async function loader() {
    const market = 'BTC-USD';
 
    try {
-      const { data } = await apolloClient.query({
+      const { data } = await apolloClient.query<
+         GetOrderbookQuery,
+         GetOrderbookQueryVariables
+      >({
          query: GET_ORDERBOOK,
          variables: { market },
          fetchPolicy: 'no-cache',

@@ -1,3 +1,5 @@
+import { LiquidityBar } from './LiquidityBar';
+
 type Order = {
    price: number;
    quantity: number;
@@ -15,6 +17,7 @@ export function OrderbookDisplay({
    // Calculate max quantities for depth visualization
    const maxBidQuantity = Math.max(...bids.map((b) => b.quantity), 0);
    const maxAskQuantity = Math.max(...asks.map((a) => a.quantity), 0);
+
    const maxQuantity = Math.max(maxBidQuantity, maxAskQuantity);
 
    return (
@@ -51,7 +54,7 @@ export function OrderbookDisplay({
                               className="relative flex justify-between items-center py-2 px-3 rounded-md hover:bg-red-500/5 transition-colors duration-200 group"
                            >
                               <div
-                                 className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent rounded-md"
+                                 className="absolute inset-0 bg-gradient-to-r from-red-500/5 rounded-md"
                                  style={{
                                     width: `${(ask.quantity / maxQuantity) * 100}%`,
                                  }}
@@ -68,16 +71,8 @@ export function OrderbookDisplay({
                </div>
             </div>
 
-            {/* Price Spread Indicator */}
-            <div className="flex items-center justify-center py-3">
-               <div className="flex-1 h-px bg-border"></div>
-               <div className="px-4 py-2 bg-muted rounded-full border">
-                  {/* <span className="text-xs font-medium text-muted-foreground">
-                     SPREAD
-                  </span> */}
-               </div>
-               <div className="flex-1 h-px bg-border"></div>
-            </div>
+            <LiquidityBar />
+
             {/* Bids Section */}
             <div className="space-y-1">
                <div className="flex justify-between items-center mb-3">
